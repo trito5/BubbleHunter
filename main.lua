@@ -1,19 +1,15 @@
 cron = require 'cron'
 
-show10plus = false
-count10plusSeconds = cron.after(1,function() show10plus = false end)
-show2minus = false
-count2minusSeconds = cron.after(1,function() show10plus = false end)
-
 function love.load()
+   
     player = love.graphics.newImage("img/player.png")
-    bg_image = love.graphics.newImage("img/candy_milk_blue_tile.png")
+    blueTile = love.graphics.newImage("img/candy_milk_blue_tile.png")
     blueTileBubbles = love.graphics.newImage("img/candy_milk_blue_tile_bubbles.png")
     chestTile = love.graphics.newImage("img/candy_milk_green_tile_chest.png")
     octopusTile = love.graphics.newImage("img/candy_milk_blue_tile_octopus.png")
-    bg_browntile = love.graphics.newImage("img/candy_milk_brown_tile.png")
-    bg_water = love.graphics.newImage("img/background.png")
-    bg_green_plants = love.graphics.newImage("img/midground.png")
+    brownTile = love.graphics.newImage("img/candy_milk_brown_tile.png")
+    bgWater = love.graphics.newImage("img/background.png")
+    bgGreenPlants = love.graphics.newImage("img/midground.png")
     plus10 = love.graphics.newImage("img/10plus.png")
     minus2 = love.graphics.newImage("img/2minus.png")
 
@@ -21,6 +17,9 @@ function love.load()
     love.audio.play(bgMusic)
     audioTakeBubbles = love.audio.newSource("sound/Absorb.mp3", "stream")
     audioLooseBubbles = love.audio.newSource("sound/Bide.wav", "stream")
+
+    count10plusSeconds = cron.after(1,function() show10plus = false end)
+    count2minusSeconds = cron.after(1,function() show10plus = false end)
 
     love.graphics.setNewFont(16)
     mapCounter = 1
@@ -39,9 +38,7 @@ function love.update(dt)
                     lockMove = true
                     keyDirection = "right"
                     playerPositionXInTilemap = playerPositionXInTilemap + 1
-                    numberOfMovesLeft = numberOfMovesLeft - 1
-                    checkIfPlayerOnBubbles(playerPositionXInTilemap, playerPositionYInTilemap)
-                    isPlayerOnOctopus(playerPositionXInTilemap, playerPositionYInTilemap)
+                    playerMovementChecks()
                 end
             elseif love.keyboard.isDown("left") then
                 if isPlayerMovementAllowed(playerPositionXInTilemap - 1, playerPositionYInTilemap) then
@@ -49,9 +46,7 @@ function love.update(dt)
                     lockMove = true
                     keyDirection = "left"
                     playerPositionXInTilemap = playerPositionXInTilemap - 1
-                    numberOfMovesLeft = numberOfMovesLeft - 1
-                    checkIfPlayerOnBubbles(playerPositionXInTilemap, playerPositionYInTilemap)
-                    isPlayerOnOctopus(playerPositionXInTilemap, playerPositionYInTilemap)
+                    playerMovementChecks()
                 end
             elseif love.keyboard.isDown("up") then
                 if isPlayerMovementAllowed(playerPositionXInTilemap, playerPositionYInTilemap - 1) then
@@ -59,9 +54,7 @@ function love.update(dt)
                     lockMove = true
                     keyDirection = "up"
                     playerPositionYInTilemap = playerPositionYInTilemap - 1
-                    numberOfMovesLeft = numberOfMovesLeft - 1
-                    checkIfPlayerOnBubbles(playerPositionXInTilemap, playerPositionYInTilemap)
-                    isPlayerOnOctopus(playerPositionXInTilemap, playerPositionYInTilemap)
+                    playerMovementChecks()
                 end
             elseif love.keyboard.isDown("down") then
                 if isPlayerMovementAllowed(playerPositionXInTilemap, playerPositionYInTilemap + 1) then
@@ -69,15 +62,11 @@ function love.update(dt)
                     lockMove = true
                     keyDirection = "down"
                     playerPositionYInTilemap = playerPositionYInTilemap + 1
-                    numberOfMovesLeft = numberOfMovesLeft - 1
-                    checkIfPlayerOnBubbles(playerPositionXInTilemap, playerPositionYInTilemap)
-                    isPlayerOnOctopus(playerPositionXInTilemap, playerPositionYInTilemap)
+                    playerMovementChecks()
                 end
             end
         end 
     end
-
-    
 end
 
 function love.keyreleased(key) 
@@ -91,11 +80,11 @@ end
 
 function love.draw()
 
-    local sx = love.graphics.getWidth() / bg_water:getWidth()
-    local sy = love.graphics.getHeight() / bg_water:getHeight()
+    local sx = love.graphics.getWidth() / bgWater:getWidth()
+    local sy = love.graphics.getHeight() / bgWater:getHeight()
   
-    love.graphics.draw(bg_water, 0, 0, 0, sx, sy)
-    love.graphics.draw(bg_green_plants, 0, 0, 0, sx, sy)
+    love.graphics.draw(bgWater, 0, 0, 0, sx, sy)
+    love.graphics.draw(bgGreenPlants, 0, 0, 0, sx, sy)
     if isPlayerDead() then
         love.graphics.print( "GAME OVER", 300, 200)
         love.graphics.print("Play again(y/n)?", 300, 250)
@@ -111,9 +100,9 @@ function love.draw()
                 --if the value on row i, column j equals 1
                 if tilemap[i][j] == 1 then
                     --Draw the rectangle
-                    love.graphics.draw(bg_image,  j * moveConstant, i * moveConstant)  
+                    love.graphics.draw(blueTile,  j * moveConstant, i * moveConstant)  
                 elseif tilemap[i][j] == 2 then
-                    love.graphics.draw(bg_browntile,  j * moveConstant, i * moveConstant)  
+                    love.graphics.draw(brownTile,  j * moveConstant, i * moveConstant)  
                 elseif tilemap[i][j] == 3 then
                     love.graphics.draw(blueTileBubbles,  j * moveConstant, i * moveConstant) 
                 elseif tilemap[i][j] == 4 then 
@@ -158,7 +147,7 @@ function checkIfPlayerOnBubbles(positionX, positionY)
     end
 end
 
-function isPlayerOnOctopus(positionX, positionY)
+function checkIfPlayerOnOctopus(positionX, positionY)
     if tilemap[positionY][positionX] == 5 then
         numberOfMovesLeft = numberOfMovesLeft - 1
         love.audio.play(audioLooseBubbles)
@@ -184,6 +173,12 @@ function hasPlayerWon(positionX, positionY)
     else
         return false
     end
+end
+
+function playerMovementChecks()
+    numberOfMovesLeft = numberOfMovesLeft - 1
+    checkIfPlayerOnBubbles(playerPositionXInTilemap, playerPositionYInTilemap)
+    checkIfPlayerOnOctopus(playerPositionXInTilemap, playerPositionYInTilemap)
 end
 
 function init()
@@ -244,8 +239,8 @@ function init()
         playerPositionYInTilemap = 1  
         x = playerPositionXInTilemap * moveConstant + 7
         y = playerPositionYInTilemap * moveConstant + 7
-        bg_water = love.graphics.newImage("img/background2.png")
-        bg_green_plants = love.graphics.newImage("img/midground2.png")
+        bgWater = love.graphics.newImage("img/background2.png")
+        bgGreenPlants = love.graphics.newImage("img/midground2.png")
 
     else
         tilemap = {
