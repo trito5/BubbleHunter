@@ -8,119 +8,150 @@ function love.load()
     chestTile = love.graphics.newImage("img/candy_milk_green_tile_chest.png")
     octopusTile = love.graphics.newImage("img/candy_milk_blue_tile_octopus.png")
     brownTile = love.graphics.newImage("img/candy_milk_brown_tile.png")
-    bgWater = love.graphics.newImage("img/background.png")
-    bgGreenPlants = love.graphics.newImage("img/midground.png")
+    blackBox = love.graphics.newImage("img/blackBox.png")
+    levelCleared = love.graphics.newImage("img/levelCleared.png")
+    gameOver = love.graphics.newImage("img/gameOver.png")
+    bgGreenPlants = love.graphics.newImage("img/titlescreen.png")
+    bgWater = love.graphics.newImage("img/titlescreen.png")
     plus10 = love.graphics.newImage("img/10plus.png")
     minus2 = love.graphics.newImage("img/2minus.png")
 
     bgMusic = love.audio.newSource("sound/watery_cave_loop.ogg", "stream")
-    love.audio.play(bgMusic)
+    bgMusic:setLooping(true)
+    bgMusic:play()
     audioTakeBubbles = love.audio.newSource("sound/Absorb.mp3", "stream")
     audioLooseBubbles = love.audio.newSource("sound/Bide.wav", "stream")
+    audioLevelCleared = love.audio.newSource("sound/Absorb_part_2.mp3", "stream")
 
     count10plusSeconds = cron.after(1,function() show10plus = false end)
     count2minusSeconds = cron.after(1,function() show10plus = false end)
 
     love.graphics.setNewFont(16)
-    mapCounter = 1
+    mapCounter = 0
     init()
     
 end
 
 function love.update(dt)
-    if not isPlayerDead() then
-        count10plusSeconds:update(dt)
-        count2minusSeconds:update(dt)
-        if not lockMove then
-            if love.keyboard.isDown("right") then
-                if isPlayerMovementAllowed(playerPositionXInTilemap + 1, playerPositionYInTilemap) then
-                    x = x + moveConstant 
-                    lockMove = true
-                    keyDirection = "right"
-                    playerPositionXInTilemap = playerPositionXInTilemap + 1
-                    playerMovementChecks()
+    if mapCounter == 0 then
+        if love.keyboard.isDown("p") then 
+            mapCounter = 1
+            init()
+        end
+    else
+        if not isPlayerDead() then
+            count10plusSeconds:update(dt)
+            count2minusSeconds:update(dt)
+            if not lockMove then
+                if love.keyboard.isDown("right") then
+                    if isPlayerMovementAllowed(playerPositionXInTilemap + 1, playerPositionYInTilemap) then
+                        x = x + moveConstant 
+                        lockMove = true
+                        keyDirection = "right"
+                        playerPositionXInTilemap = playerPositionXInTilemap + 1
+                        playerMovementChecks()
+                    end
+                elseif love.keyboard.isDown("left") then
+                    if isPlayerMovementAllowed(playerPositionXInTilemap - 1, playerPositionYInTilemap) then
+                        x = x - moveConstant 
+                        lockMove = true
+                        keyDirection = "left"
+                        playerPositionXInTilemap = playerPositionXInTilemap - 1
+                        playerMovementChecks()
+                    end
+                elseif love.keyboard.isDown("up") then
+                    if isPlayerMovementAllowed(playerPositionXInTilemap, playerPositionYInTilemap - 1) then
+                        y = y - moveConstant 
+                        lockMove = true
+                        keyDirection = "up"
+                        playerPositionYInTilemap = playerPositionYInTilemap - 1
+                        playerMovementChecks()
+                    end
+                elseif love.keyboard.isDown("down") then
+                    if isPlayerMovementAllowed(playerPositionXInTilemap, playerPositionYInTilemap + 1) then
+                        y = y + moveConstant 
+                        lockMove = true
+                        keyDirection = "down"
+                        playerPositionYInTilemap = playerPositionYInTilemap + 1
+                        playerMovementChecks()
+                    end
                 end
-            elseif love.keyboard.isDown("left") then
-                if isPlayerMovementAllowed(playerPositionXInTilemap - 1, playerPositionYInTilemap) then
-                    x = x - moveConstant 
-                    lockMove = true
-                    keyDirection = "left"
-                    playerPositionXInTilemap = playerPositionXInTilemap - 1
-                    playerMovementChecks()
-                end
-            elseif love.keyboard.isDown("up") then
-                if isPlayerMovementAllowed(playerPositionXInTilemap, playerPositionYInTilemap - 1) then
-                    y = y - moveConstant 
-                    lockMove = true
-                    keyDirection = "up"
-                    playerPositionYInTilemap = playerPositionYInTilemap - 1
-                    playerMovementChecks()
-                end
-            elseif love.keyboard.isDown("down") then
-                if isPlayerMovementAllowed(playerPositionXInTilemap, playerPositionYInTilemap + 1) then
-                    y = y + moveConstant 
-                    lockMove = true
-                    keyDirection = "down"
-                    playerPositionYInTilemap = playerPositionYInTilemap + 1
-                    playerMovementChecks()
-                end
-            end
-        end 
+            end 
+        end
     end
 end
 
 function love.keyreleased(key) 
+
     if key == keyDirection then
         lockMove = false
     end
+    -- HÄR MÅSTE DET FIXAS SÅ MAN INTE KAN RESETA MITT I
     if key == "y" then
         init()
     end
+    
 end
 
 function love.draw()
 
     local sx = love.graphics.getWidth() / bgWater:getWidth()
     local sy = love.graphics.getHeight() / bgWater:getHeight()
-  
+   
     love.graphics.draw(bgWater, 0, 0, 0, sx, sy)
     love.graphics.draw(bgGreenPlants, 0, 0, 0, sx, sy)
-    if isPlayerDead() then
-        love.graphics.print( "GAME OVER", 300, 200)
-        love.graphics.print("Play again(y/n)?", 300, 250)
+     
+    if mapCounter > 0 then  
+        if hasPlayerWon(playerPositionXInTilemap, playerPositionYInTilemap) then
+            mapCounter = mapCounter + 1
+            love.audio.play(audioLevelCleared)
+            init()
+        elseif isPlayerDead() then
+            --love.graphics.print( "GAME OVER", 300, 200)
+            love.graphics.draw(gameOver, 100, 100)
+            love.graphics.print("Play again(y/n)?", 330, 260)
+        else
+            for i=1,#tilemap do
+                --for j till the number of values in this row
+                for j=1,#tilemap[i] do
+                    --if the value on row i, column j equals 1
+                    if tilemap[i][j] == 1 then
+                        love.graphics.draw(blueTile,  11 + j * moveConstant, i * moveConstant)  
+                    elseif tilemap[i][j] == 2 then
+                        love.graphics.draw(brownTile, 11 + j * moveConstant, i * moveConstant)  
+                    elseif tilemap[i][j] == 3 then
+                        love.graphics.draw(blueTileBubbles, 11 + j * moveConstant, i * moveConstant) 
+                    elseif tilemap[i][j] == 4 then 
+                        love.graphics.draw(chestTile, 11 + j * moveConstant, i * moveConstant)
+                    elseif tilemap[i][j] == 5 then 
+                        love.graphics.draw(octopusTile, 11 + j * moveConstant, i * moveConstant)
+                    end 
+                end
+            end
 
-    elseif hasPlayerWon(playerPositionXInTilemap, playerPositionYInTilemap) then
-        love.graphics.print( "LEVEL CLEARED", 300, 200)
-        mapCounter = mapCounter + 1
-        init()
-    else
-        for i=1,#tilemap do
-            --for j till the number of values in this row
-            for j=1,#tilemap[i] do
-                --if the value on row i, column j equals 1
-                if tilemap[i][j] == 1 then
-                    --Draw the rectangle
-                    love.graphics.draw(blueTile,  j * moveConstant, i * moveConstant)  
-                elseif tilemap[i][j] == 2 then
-                    love.graphics.draw(brownTile,  j * moveConstant, i * moveConstant)  
-                elseif tilemap[i][j] == 3 then
-                    love.graphics.draw(blueTileBubbles,  j * moveConstant, i * moveConstant) 
-                elseif tilemap[i][j] == 4 then 
-                    love.graphics.draw(chestTile,  j * moveConstant, i * moveConstant)
-                elseif tilemap[i][j] == 5 then 
-                    love.graphics.draw(octopusTile,  j * moveConstant, i * moveConstant)
-                end 
+            love.graphics.draw(player, x + 11, y)
+            love.graphics.print("Bubbles: " .. numberOfMovesLeft, 41, 550)
+            love.graphics.print("Map: " .. mapCounter, 700, 550)
+            if show10plus then
+                love.graphics.draw(plus10, positionPlusSignX, positionPlusSignY)
+            end
+            if show2minus then
+                love.graphics.draw(minus2, positionMinusSignX, positionMinusSignY)
             end
         end
-
-        love.graphics.draw(player, x, y)
-        love.graphics.print("Bubbles: " .. numberOfMovesLeft, 30, 550)
-        if show10plus then
-            love.graphics.draw(plus10, positionPlusSignX, positionPlusSignY)
-        end
-        if show2minus then
-            love.graphics.draw(minus2, positionMinusSignX, positionMinusSignY)
-        end
+    else 
+        love.graphics.print("Don't run out of air bubbles!", 280, 220)
+        
+        love.graphics.setColor(255,255,255,0.8)
+        love.graphics.draw(blackBox, 0, 0)
+        love.graphics.setColor(255,255,255,100)
+        love.graphics.draw(blueTileBubbles, 300, 330)
+        love.graphics.print("+10 air bubbles.", 345, 335)
+        love.graphics.draw(octopusTile, 300, 370)
+        love.graphics.print("-2 air bubbles.", 345, 375)
+        love.graphics.draw(chestTile, 300, 410)
+        love.graphics.print("Reach the chest.", 345, 415)
+        love.graphics.print("Press P to play", 330, 480)
     end
 end
 
@@ -141,7 +172,7 @@ function checkIfPlayerOnBubbles(positionX, positionY)
         love.audio.play(audioTakeBubbles)
         tilemap[positionY][positionX] = 1
         show10plus = true      
-        positionPlusSignX = playerPositionXInTilemap * moveConstant + 15
+        positionPlusSignX = playerPositionXInTilemap * moveConstant + 25
         positionPlusSignY = playerPositionYInTilemap * moveConstant - 15
         count10plusSeconds = cron.after(1, function() show10plus = false end)
     end
@@ -191,7 +222,9 @@ function init()
 
     numberOfMovesLeft = 10
 
-    if mapCounter == 1 then
+    if mapCounter == 0 then
+        tilemap = {}
+    elseif mapCounter == 1 then
         tilemap = {
             {4, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 5, 1, 1, 1},
             {1, 0, 0, 0, 1, 0, 0, 3, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -211,29 +244,31 @@ function init()
             {1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 5, 0, 0, 0, 1, 0, 0, 1},
             {1, 1, 1, 0, 0, 0, 1, 3, 1, 1, 0, 0, 0, 1, 3, 1, 1, 0, 0, 0, 1, 1, 1, 2}
         }
+        bgWater = love.graphics.newImage("img/background.png")
+        bgGreenPlants = love.graphics.newImage("img/midground.png")
         playerPositionXInTilemap = 24
         playerPositionYInTilemap = 17  
         x = playerPositionXInTilemap * moveConstant + 7
         y = playerPositionYInTilemap * moveConstant + 7
     elseif mapCounter == 2 then
         tilemap = {
-            {2, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1},
+            {2, 1, 1, 5, 1, 3, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 5, 5, 1, 3, 1, 1},
             {0, 1, 0, 0, 0, 1, 0, 3, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1},
-            {1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 3, 1, 1, 1, 1, 3, 1, 1, 1},
-            {1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0},
-            {1, 1, 0, 0, 1, 0, 0, 1, 0, 5, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0},
-            {0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},
-            {0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 5, 1, 3, 1},
-            {0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 4, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1},
-            {1, 3, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1},
-            {1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1},
-            {1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1},
-            {1, 0, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 3, 0, 1, 3, 1, 0, 1, 0, 0},
-            {1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1},
-            {1, 0, 3, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1},
-            {5, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1},
-            {5, 0, 0, 0, 1, 5, 1, 5, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0},
-            {1, 1, 1, 3, 1, 0, 0, 3, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0}
+            {1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 5, 1, 1, 1, 5, 1},
+            {1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 3, 1, 0, 0, 1, 0, 0, 0, 1, 0},
+            {1, 3, 0, 0, 1, 0, 0, 1, 0, 5, 0, 1, 1, 1, 0, 0, 1, 5, 1, 0, 1, 1, 1, 0},
+            {0, 1, 1, 0, 5, 5, 1, 1, 5, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},
+            {0, 0, 1, 5, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 5, 1, 3, 1},
+            {0, 0, 0, 0, 1, 5, 1, 0, 0, 1, 0, 4, 0, 0, 0, 5, 0, 0, 1, 0, 0, 0, 0, 1},
+            {1, 3, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 5, 0, 0, 1, 5, 1, 1, 0, 1},
+            {1, 0, 0, 1, 0, 0, 3, 1, 0, 3, 0, 1, 0, 1, 1, 5, 0, 0, 0, 1, 0, 1, 0, 1},
+            {1, 0, 0, 1, 0, 0, 0, 5, 0, 1, 5, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 5, 1, 1},
+            {1, 0, 1, 5, 1, 5, 1, 1, 1, 0, 0, 0, 0, 5, 1, 3, 0, 1, 3, 1, 0, 1, 0, 0},
+            {1, 0, 5, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 3, 1, 1},
+            {1, 0, 3, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 5, 1, 1, 0, 0, 5},
+            {5, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 5, 0, 1, 1, 1, 3, 0, 0, 0, 1, 0, 1, 1},
+            {1, 0, 0, 0, 1, 5, 1, 5, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0},
+            {1, 1, 1, 3, 1, 0, 0, 3, 1, 1, 5, 1, 0, 0, 0, 0, 1, 5, 1, 1, 5, 1, 1, 0}
         }
         playerPositionXInTilemap = 1
         playerPositionYInTilemap = 1  
@@ -244,24 +279,29 @@ function init()
 
     else
         tilemap = {
-            {1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0},
-            {1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1},
-            {1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0},
-            {1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0},
-            {1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1},
-            {1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0},
-            {1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0},
-            {1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1},
-            {1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0},
-            {1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0},
-            {1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1},
-            {1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0},
-            {1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0},
-            {1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1},
-            {1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0},
-            {1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0},
-            {1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1},
+            {0, 0, 0, 0, 1, 3, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 1, 1, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 1, 0, 0, 5, 0, 0, 4, 1, 5, 5, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0},
+            {0, 1, 5, 1, 1, 0, 0, 5, 5, 5, 1, 0, 0, 1, 1, 5, 1, 0, 0, 1, 1, 5, 1, 0, 0},
+            {0, 1, 0, 0, 5, 1, 1, 5, 0, 0, 5, 0, 0, 1, 0, 0, 1, 1, 3, 5, 0, 0, 3, 0, 0},
+            {0, 3, 0, 0, 1, 0, 0, 5, 0, 0, 5, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0},
+            {0, 1, 1, 5, 1, 0, 0, 5, 1, 1, 5, 0, 0, 5, 1, 1, 5, 0, 0, 1, 1, 1, 1, 0, 0},
+            {0, 1, 0, 0, 5, 1, 1, 1, 0, 0, 5, 0, 0, 5, 0, 0, 1, 1, 1, 5, 0, 0, 1, 0, 0},
+            {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 2, 1, 1, 0, 0, 5, 0, 0, 1, 0, 0, 5, 0, 0},
+            {0, 5, 1, 1, 1, 0, 0, 1, 5, 1, 5, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0},
+            {0, 1, 0, 0, 5, 1, 3, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 3, 1, 1, 0, 0, 1, 0, 0},
+            {0, 1, 0, 0, 1, 0, 0, 5, 0, 0, 5, 1, 1, 5, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0},
+            {0, 1, 1, 5, 1, 0, 0, 5, 1, 1, 1, 0, 0, 5, 1, 1, 1, 0, 0, 5, 1, 1, 5, 0, 0},
+            {0, 5, 0, 0, 1, 5, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0},
+            {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 5, 1, 5, 0, 0, 5, 0, 0, 1, 0, 0, 1, 0, 0},
+            {0, 3, 1, 1, 1, 0, 0, 5, 1, 1, 3, 0, 0, 3, 1, 1, 1, 0, 0, 5, 1, 1, 3, 0, 0},
+            {0, 0, 0, 0, 5, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         }
-        
+        playerPositionXInTilemap = 12
+        playerPositionYInTilemap = 8  
+        x = playerPositionXInTilemap * moveConstant + 7
+        y = playerPositionYInTilemap * moveConstant + 7
+        bgWater = love.graphics.newImage("img/background3.png")
+        bgGreenPlants = love.graphics.newImage("img/midground3.png")  
     end
  end
