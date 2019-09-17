@@ -87,8 +87,14 @@ function love.keyreleased(key)
         lockMove = false
     end
     -- HÄR MÅSTE DET FIXAS SÅ MAN INTE KAN RESETA MITT I
-    if key == "y" then
-        init()
+    if isPlayerDead() then
+        if key == "y" then
+            init()
+        elseif key == "n" then
+            mapCounter = 0
+            bgGreenPlants = love.graphics.newImage("img/titlescreen.png")
+            init()
+        end
     end
     
 end
@@ -107,14 +113,11 @@ function love.draw()
             love.audio.play(audioLevelCleared)
             init()
         elseif isPlayerDead() then
-            --love.graphics.print( "GAME OVER", 300, 200)
             love.graphics.draw(gameOver, 100, 100)
             love.graphics.print("Play again(y/n)?", 330, 260)
         else
             for i=1,#tilemap do
-                --for j till the number of values in this row
                 for j=1,#tilemap[i] do
-                    --if the value on row i, column j equals 1
                     if tilemap[i][j] == 1 then
                         love.graphics.draw(blueTile,  11 + j * moveConstant, i * moveConstant)  
                     elseif tilemap[i][j] == 2 then
@@ -140,6 +143,7 @@ function love.draw()
             end
         end
     else 
+        love.graphics.draw(bgGreenPlants, 0, 0)
         love.graphics.print("Don't run out of air bubbles!", 280, 220)
         
         love.graphics.setColor(255,255,255,0.8)
@@ -277,7 +281,7 @@ function init()
         bgWater = love.graphics.newImage("img/background2.png")
         bgGreenPlants = love.graphics.newImage("img/midground2.png")
 
-    else
+    elseif mapCounter == 3 then
         tilemap = {
             {0, 0, 0, 0, 1, 3, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 1, 1, 0, 0, 0, 0, 0},
             {0, 0, 0, 0, 1, 0, 0, 5, 0, 0, 4, 1, 5, 5, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0},
@@ -303,5 +307,25 @@ function init()
         y = playerPositionYInTilemap * moveConstant + 7
         bgWater = love.graphics.newImage("img/background3.png")
         bgGreenPlants = love.graphics.newImage("img/midground3.png")  
+    else
+        tilemap = {
+            {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        }
     end
  end
