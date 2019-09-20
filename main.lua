@@ -9,6 +9,7 @@ function love.load()
     octopusTile = love.graphics.newImage("img/candy_milk_blue_tile_octopus.png")
     brownTile = love.graphics.newImage("img/candy_milk_brown_tile.png")
     blackBox = love.graphics.newImage("img/blackBox.png")
+    endBox = love.graphics.newImage("img/endBox.png") 
     levelCleared = love.graphics.newImage("img/levelCleared.png")
     gameOver = love.graphics.newImage("img/gameOver.png")
     bgGreenPlants = love.graphics.newImage("img/titlescreen.png")
@@ -17,11 +18,10 @@ function love.load()
     minus2 = love.graphics.newImage("img/2minus.png")
 
     bgMusic = love.audio.newSource("sound/watery_cave_loop.ogg", "stream")
-    bgMusic:setLooping(true)
-    bgMusic:play()
     audioTakeBubbles = love.audio.newSource("sound/Absorb.mp3", "stream")
     audioLooseBubbles = love.audio.newSource("sound/Bide.wav", "stream")
     audioLevelCleared = love.audio.newSource("sound/Absorb_part_2.mp3", "stream")
+    fanfare = love.audio.newSource("sound/Theme1.wav", "stream")
 
     count10plusSeconds = cron.after(1,function() show10plus = false end)
     count2minusSeconds = cron.after(1,function() show10plus = false end)
@@ -86,14 +86,25 @@ function love.keyreleased(key)
     if key == keyDirection then
         lockMove = false
     end
-    -- HÄR MÅSTE DET FIXAS SÅ MAN INTE KAN RESETA MITT I
-    if isPlayerDead() then
+    if isPlayerDead() or mapCounter > 3 then
         if key == "y" then
+            if mapCounter > 4 then
+                mapCounter = 1
+                love.audio.stop(fanfare)
+                bgMusic:setLooping(true)
+                bgMusic:play()
+            end
             init()
         elseif key == "n" then
             mapCounter = 0
             bgGreenPlants = love.graphics.newImage("img/titlescreen.png")
+            if mapCounter > 3 then
+                love.audio.stop(fanfare)
+                bgMusic:setLooping(true)
+                bgMusic:play()
+            end
             init()
+        
         end
     end
     
@@ -107,7 +118,39 @@ function love.draw()
     love.graphics.draw(bgWater, 0, 0, 0, sx, sy)
     love.graphics.draw(bgGreenPlants, 0, 0, 0, sx, sy)
      
-    if mapCounter > 0 then  
+    if mapCounter < 1 then  
+
+        love.graphics.draw(bgGreenPlants, 0, 0)
+        love.graphics.print("Don't run out of air bubbles!", 280, 220)
+        
+        love.graphics.setColor(255,255,255,0.8)
+        love.graphics.draw(blackBox, 0, 0)
+        love.graphics.setColor(255,255,255,100)
+        love.graphics.draw(blueTileBubbles, 300, 330)
+        love.graphics.print("+10 air bubbles.", 345, 335)
+        love.graphics.draw(octopusTile, 300, 370)
+        love.graphics.print("-2 air bubbles.", 345, 375)
+        love.graphics.draw(chestTile, 300, 410)
+        love.graphics.print("Reach the chest.", 345, 415)
+        love.graphics.print("Press P to play", 330, 480)
+
+    elseif mapCounter > 4 then
+        love.graphics.draw(levelCleared, 90, 100)
+        love.graphics.setColor(255, 255, 255, 0.5)
+        love.graphics.draw(endBox, -5, 45)
+        love.graphics.setColor(255, 255, 255, 1)
+        love.graphics.print("Thank you for playing!", 300, 300)
+        love.graphics.print("Play again (y/n)?", 325, 400)
+        
+        love.graphics.print("This game was made in Kodsnacks spelsylt 2019", 200, 320)
+        love.graphics.setNewFont(12)
+        love.graphics.print("Credit sound: Pascal Belisle and Magic_Spark", 250, 555)
+        love.graphics.print("Credit graphic: Luiz Zuno, Shikikashi's Fantasi Icons Pack and Candy Milk tileset", 150, 569)
+        love.graphics.setNewFont(16)
+       
+        love.audio.play(fanfare)
+        love.audio.stop(bgMusic)
+    else 
         if hasPlayerWon(playerPositionXInTilemap, playerPositionYInTilemap) then
             mapCounter = mapCounter + 1
             love.audio.play(audioLevelCleared)
@@ -142,20 +185,6 @@ function love.draw()
                 love.graphics.draw(minus2, positionMinusSignX, positionMinusSignY)
             end
         end
-    else 
-        love.graphics.draw(bgGreenPlants, 0, 0)
-        love.graphics.print("Don't run out of air bubbles!", 280, 220)
-        
-        love.graphics.setColor(255,255,255,0.8)
-        love.graphics.draw(blackBox, 0, 0)
-        love.graphics.setColor(255,255,255,100)
-        love.graphics.draw(blueTileBubbles, 300, 330)
-        love.graphics.print("+10 air bubbles.", 345, 335)
-        love.graphics.draw(octopusTile, 300, 370)
-        love.graphics.print("-2 air bubbles.", 345, 375)
-        love.graphics.draw(chestTile, 300, 410)
-        love.graphics.print("Reach the chest.", 345, 415)
-        love.graphics.print("Press P to play", 330, 480)
     end
 end
 
@@ -217,7 +246,6 @@ function playerMovementChecks()
 end
 
 function init()
-
     moveConstant = 30
     
     lockMove = false
@@ -227,6 +255,9 @@ function init()
     numberOfMovesLeft = 10
 
     if mapCounter == 0 then
+        bgMusic:setLooping(true)
+        bgMusic:play()
+        love.audio.stop(fanfare)
         tilemap = {}
     elseif mapCounter == 1 then
         tilemap = {
@@ -307,7 +338,33 @@ function init()
         y = playerPositionYInTilemap * moveConstant + 7
         bgWater = love.graphics.newImage("img/background3.png")
         bgGreenPlants = love.graphics.newImage("img/midground3.png")  
-    else
+    elseif mapCounter == 4 then
+        tilemap = {
+            {5, 5, 1, 5, 1, 3, 1, 5, 1, 1, 5, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 5, 1, 1, 0},
+            {1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 3, 0},
+            {3, 0, 3, 1, 5, 5, 5, 1, 1, 1, 1, 5, 1, 5, 1, 1, 1, 1, 3, 5, 5, 5, 0, 1, 0},
+            {5, 0, 1, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 5, 1, 1, 0},
+            {5, 0, 5, 0, 1, 1, 5, 1, 5, 1, 5, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0},
+            {1, 0, 5, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 1, 1, 0, 1, 0},
+            {1, 0, 1, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 5, 0, 5, 0, 5, 0},
+            {5, 1, 5, 0, 5, 0, 5, 0, 0, 0, 5, 0, 0, 0, 0, 5, 0, 5, 1, 3, 0, 1, 0, 1, 0},
+            {1, 0, 5, 0, 1, 0, 5, 0, 5, 5, 5, 5, 4, 5, 5, 5, 0, 5, 0, 1, 0, 1, 0, 1, 0},
+            {3, 0, 1, 0, 1, 5, 3, 0, 5, 0, 0, 0, 0, 0, 5, 0, 0, 5, 0, 1, 0, 5, 1, 1, 0},
+            {1, 0, 5, 1, 1, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 1, 0, 1, 0, 3, 0},
+            {5, 0, 5, 0, 1, 0, 0, 1, 0, 0, 0, 0, 5, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0},
+            {5, 1, 5, 0, 3, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 5, 1, 0, 1, 0, 5, 0},
+            {1, 0, 1, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0},
+            {1, 0, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 5, 3, 1, 1, 5, 1, 1, 1, 1, 1, 0, 1, 0},
+            {1, 0, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 3, 0, 0, 1, 0},
+            {1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 5, 1, 1, 3, 5, 5, 5, 1, 1, 5, 1, 5, 1, 0},
+        }
+        playerPositionXInTilemap = 11
+        playerPositionYInTilemap = 2  
+        x = playerPositionXInTilemap * moveConstant + 7
+        y = playerPositionYInTilemap * moveConstant + 7
+        bgWater = love.graphics.newImage("img/background4.png")
+        bgGreenPlants = love.graphics.newImage("img/midground.png")  
+    else 
         tilemap = {
             {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
             {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
